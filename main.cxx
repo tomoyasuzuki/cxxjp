@@ -19,15 +19,18 @@ class value {
         std::string s;
         int d;
         bool b;
+        std::vector<int> a;
     public:
         value() : t(unknown) {};
         value(std::string str) : t(string), s(str) {};
         value(int dv) : t(integer), d(dv) {};
         value(bool bv) : t(boolean), b(bv) {};
+        value(std::vector<int>& arr) : t(array), a(arr) {};
         ~value() {};
         const std::string& get_str() { return s; };
         const int& get_integer() { return d; };
         const bool& get_boolean() { return b; };
+        const std::vector<int>& get_arr() { return a; };
 };
 
 int skip_whitespaces(std::string& s, int i) {
@@ -80,6 +83,45 @@ int parse_integer(std::string& s, std::map<std::string, value>& values, std::str
     
 }
 
+int parse_array(std::string& s, std::map<std::string, value>& values, std::string& key, int i) {
+    std::vector<int> arr;
+    int si;
+
+    while(s[i] != ']' && i < s.length() - 1) {
+        std::istringstream ss;
+        std::string substr;
+        int v = 0;
+        
+        i = skip_whitespaces(s, i);
+        si = i;
+
+        while((s[i] >= '0' && s[i] <= '9') && i < s.length() - 1) i++;
+
+        substr = s.substr(si, i-si);
+        ss = std::istringstream(substr);
+        ss >> v;
+        arr.push_back(v);
+        std::cout << "push back: " << v << std::endl;
+
+        i = skip_whitespaces(s, i);
+        i++;
+    }
+
+    values[key] = value(arr);
+
+    for (int j = 0; j < arr.size(); j++) {
+        std::cout << arr[j];
+        if (i != arr.size() - 1) {
+            std::cout << ", ";
+        } else {
+            std::cout << "\n";
+        }
+    }
+
+    return i;
+
+}
+
 int get_key(std::string& s, std::string& key, int ki_start) {
     int ki_end = ki_start;
 
@@ -124,6 +166,8 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
             } else if (s.substr(current_i, 4) == "false") {
                 current_i += 4;
                 values[key] = value(false);
+            } else if (s[current_i] == '[') {
+                current_i = parse_array(s, values, key, current_i+1);
             } else {
                 std::cout << "else: " << s[current_i] << std::endl;
                 break;
@@ -131,11 +175,12 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
         } else {
             std::cout << "not : " << std::endl;
         }
+    
     }
 }
 
 int main() {
-    std::string json = R"({"hoge": "huga", "hogeint": 5, "hogebool": true,"piyo": "piyoyo", "hugaint": 27892})";
+    std::string json = R"({"hoge": "huga", "hogeint": 5, "hogebool": true,"piyo": "piyoyo", "arr": [10, 20]})";
     std::map<std::string, value> values;
 
     parse(json, values);
@@ -146,6 +191,17 @@ int main() {
     std::cout << "hogeint: " << values["hogeint"].get_integer() << std::endl;
     std::cout << "hugaint: " << values["hugaint"].get_integer() << std::endl;
     std::cout << "hogebool: " << (values["hogebool"].get_boolean() ? "true" : "false") << std::endl;
+    
+    std::vector<int> arr = values["arr"].get_arr();
+    std::cout << "arr: ";
+    for (int i = 0; i < arr.size(); i++) {
+        std::cout << arr[i];
+        if (i != arr.size() -1) {
+            std::cout << ",";
+        } else {
+            std::cout << "\n";
+        }
+    }
 
     return 1;
 }
