@@ -112,6 +112,7 @@ int parse_array(std::string& s, std::map<std::string, value>& values, std::strin
         if (s[i] == '"') {
             int j = i;
             i++;
+            std::cout << "ss" << s[i+1] << std::endl;
 
             while(s[i] != '"' && i < s.length() - 1) i++;
             
@@ -125,13 +126,15 @@ int parse_array(std::string& s, std::map<std::string, value>& values, std::strin
             ss = std::istringstream(substr);
             ss >> v;
             val = value(v);  
-            i -= 1;       
+            i -= 1; 
+            std::cout << "arrint" << s[i] << std::endl;      
         } else if (s.substr(i,  4) == "true") {
             i += 3;
             val = value(true);
         } else if (s.substr(i, 5) == "false") {
             i += 4;
             val = value(false);
+            std::cout << "false: " << s[i+1] << std::endl;
         } else {
             std::cout << "unknown: " << s[i] << std::endl;
         }
@@ -156,9 +159,11 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
     std::string obj_key;
     std::map<std::string, value> obj;
 
-    current_i = skip_whitespaces(s, current_i);
+    // next of {
+    i++;
 
     while(s[current_i] != '}') {
+        current_i++;
         current_i = skip_whitespaces(s, current_i);
         ki_start = current_i;
         ki_end = current_i;
@@ -178,14 +183,17 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
                 current_i = parse_string(s, obj, obj_key, current_i);
             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
                 current_i = parse_double(s, obj, obj_key, current_i);
+                std::cout << "aaa: " << s[current_i] << std::endl;
             } else if (s.substr(current_i, 4) == "true")  { 
-                current_i += 4;
+                current_i += 3;
                 obj[obj_key] = value(true);
+                std::cout << "trr: " << s[current_i] << std::endl;
             } else if (s.substr(current_i, 5) == "false") {
-                current_i += 5;
+                current_i += 4;
                 obj[obj_key] = value(false);
+                std::cout << "adada: " << s[current_i] << std::endl;
             } else if (s[current_i] == '[') {
-                current_i = parse_array(s, obj, obj_key, current_i+1);
+                current_i = parse_array(s, obj, obj_key, current_i);
             } else if (s.substr(current_i, 4) == "null") {
                 values[obj_key] = value(nullptr);
             } else if (s[current_i] == '{') {
@@ -198,12 +206,15 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
             current_i = skip_whitespaces(s, current_i);
             std::cout << "not: " << s[current_i] << std::endl;
         }
-    
+
+        current_i++;
+        current_i = skip_whitespaces(s, current_i);
+        std::cout << "end: " << s[current_i] << std::endl;
     }
     
     values[key] = value(obj);
 
-    return current_i+2;
+    return current_i+1;
 }
 
 void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
@@ -223,7 +234,6 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
         while(s[ki_end] != '"' && ki_end < s.length() - 1) ki_end++;
 
         current_i = get_key(s, key, ki_start);
-        std::cout << "key: " << key << std::endl;
     
         current_i = skip_whitespaces(s, ki_end + 1);
         
@@ -246,7 +256,7 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
             } else if (s.substr(current_i, 4) == "null") {
                 values[key] = value(nullptr);
             } else if (s[current_i] == '{') {
-                //current_i = parse_object(s, values, key, current_i+1);
+                current_i = parse_object(s, values, key, current_i);
             } else {
                 std::cout << "else: " << s[current_i] << std::endl;
                 break;
@@ -265,7 +275,7 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
 }
 
 int main() {
-    std::string json = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, "hogebool": true, "piyo": "piyoyo", "arr": [10, 20, "arrstr", false], "obj": {"objstr": "obobob"}})";
+    std::string json = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, "hogebool": true, "piyo": "piyoyo", "arr": [10, 20, "arrstr", false], "obj": {"objstr": "obobob", "objdouble": 1.234, "objbool": true, "objarr": [2,"ddd", false]}})";
     std::map<std::string, value> values;
 
     parse(json, values);
@@ -300,6 +310,28 @@ int main() {
 
     std::map<std::string, value> obj = values["obj"].get_obj();
     std::cout << "objstr: " << obj["objstr"].get_str() << std::endl;
+    std::cout << "objdouble: " << obj["objdouble"].get_double() << std::endl;
+    std::cout << "objbool: " << (obj["objbool"].get_boolean() ? "true" : "false") << std::endl;
 
+    std::vector<value> aarr = obj["objarr"].get_arr();
+    std::cout << "aarr: ";
+    for (int i = 0; i < aarr.size(); i++) {
+        type t = aarr[i].gettype();
+
+        if (t == string) {
+            std::cout << aarr[i].get_str();
+        } else if (t == double_type) {
+            std::cout << aarr[i].get_double();
+        } else if (t == boolean) {
+            std::cout << (aarr[i].get_boolean() ? "true" :  "false");
+        }
+
+        if (i != aarr.size() -1) {
+            std::cout << ",";
+        } else {
+            std::cout << "\n";
+        }
+    }
+   
     return 1;
-}
+} 
