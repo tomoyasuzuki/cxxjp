@@ -70,9 +70,7 @@ int parse_string(std::string& s, std::map<std::string, value>& values, std::stri
     v = s.substr(vi_start+1, vi_end-vi_start-1);
     values[key] = value(v);
 
-    vi_end = skip_whitespaces(s, vi_end + 1);
-
-    return vi_end + 1;
+    return vi_end;
 }
 
 double parse_double(std::string& s, std::map<std::string, value>& values, std::string& key, int i) {
@@ -93,9 +91,7 @@ double parse_double(std::string& s, std::map<std::string, value>& values, std::s
     ss >> v;
     values[key] = value(v);
 
-    i = skip_whitespaces(s, i);
-
-    return i+1;
+    return i-1;
     
 }
 
@@ -109,10 +105,10 @@ int parse_array(std::string& s, std::map<std::string, value>& values, std::strin
         double v = 0;
         std::string vs;
         value val;
-        
+        i++;
         i = skip_whitespaces(s, i);
         si = i;
-
+        
         if (s[i] == '"') {
             int j = i;
             i++;
@@ -121,20 +117,20 @@ int parse_array(std::string& s, std::map<std::string, value>& values, std::strin
             
             substr = s.substr(j, i-j+1);
             val = value(substr);
-            i++;
         } else if (s[i] >= '0' && s[i] <= '9') {
 
             while((s[i] >= '0' && s[i] <= '9') && i < s.length() - 1) i++; 
 
             substr = s.substr(si, i-si);
             ss = std::istringstream(substr);
-            ss >> v;   
-            val = value(v);         
+            ss >> v;
+            val = value(v);  
+            i -= 1;       
         } else if (s.substr(i,  4) == "true") {
-            i += 4;
+            i += 3;
             val = value(true);
         } else if (s.substr(i, 5) == "false") {
-            i += 5;
+            i += 4;
             val = value(false);
         } else {
             std::cout << "unknown: " << s[i] << std::endl;
@@ -142,8 +138,10 @@ int parse_array(std::string& s, std::map<std::string, value>& values, std::strin
 
         arr.push_back(val);
 
-        i = skip_whitespaces(s, i);
+        // skip last not space value
         i++;
+        // skipt till ","
+        i = skip_whitespaces(s, i);
     }
 
     values[key] = value(arr);
@@ -215,6 +213,7 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
     std::string key;
     
     while(s[current_i] != '\0') {
+        // skip spaces till '"'
         current_i = skip_whitespaces(s, current_i);
         ki_start = current_i;
         ki_end = current_i;
@@ -224,6 +223,7 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
         while(s[ki_end] != '"' && ki_end < s.length() - 1) ki_end++;
 
         current_i = get_key(s, key, ki_start);
+        std::cout << "key: " << key << std::endl;
     
         current_i = skip_whitespaces(s, ki_end + 1);
         
@@ -232,20 +232,21 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
           
             if (s[current_i] == '"') {
                 current_i = parse_string(s, values, key, current_i);
+                std::cout << "after string " << s[current_i] << std::endl;
             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
                 current_i = parse_double(s, values, key, current_i);
             } else if (s.substr(current_i, 4) == "true")  { 
-                current_i += 4;
+                current_i += 3;
                 values[key] = value(true);
             } else if (s.substr(current_i, 5) == "false") {
-                current_i += 5;
+                current_i += 4;
                 values[key] = value(false);
             } else if (s[current_i] == '[') {
-                current_i = parse_array(s, values, key, current_i+1);
+                current_i = parse_array(s, values, key, current_i);
             } else if (s.substr(current_i, 4) == "null") {
                 values[key] = value(nullptr);
             } else if (s[current_i] == '{') {
-                current_i = parse_object(s, values, key, current_i+1);
+                //current_i = parse_object(s, values, key, current_i+1);
             } else {
                 std::cout << "else: " << s[current_i] << std::endl;
                 break;
@@ -253,12 +254,18 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
         } else {
             std::cout << "not : " << s[current_i] << std::endl;
         }
-    
+        
+        // skip last "not space value" 
+        current_i++;
+        // increment index at ","
+        current_i = skip_whitespaces(s, current_i);
+        // skip ","
+        current_i++;
     }
 }
 
 int main() {
-    std::string json = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, "obj": {"objstr": "ob",}, "hogebool": true, "piyo": "piyoyo", "arr": [10, 20, "arrstr", false]})";
+    std::string json = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, "hogebool": true, "piyo": "piyoyo", "arr": [10, 20, "arrstr", false], "obj": {"objstr": "obobob"}})";
     std::map<std::string, value> values;
 
     parse(json, values);
