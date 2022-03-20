@@ -160,16 +160,16 @@ int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
 }
 
 int parse_object(std::string& s, object_t& obj, std::string& key, int i) {
-    int start, end, current_i;
+    int end, current_i;
     std::string new_obj_key;
     object_t new_obj;
 
-    start = end = current_i = i;
+    end = current_i = i;
 
     while(s[current_i] != '}') {
-        current_i++;
-        current_i = skip_whitespaces(s, current_i);
-        start = end = current_i;
+        //current_i++;
+        //current_i = skip_whitespaces(s, current_i);
+        //end = current_i;
 
         while(s[current_i] != '"' && current_i < s.length() - 1) current_i++;
         end = current_i + 1;
@@ -215,91 +215,123 @@ int parse_object(std::string& s, object_t& obj, std::string& key, int i) {
     return current_i;
 }
 
-void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
-    int ki_start = i;
-    int ki_end = i;
-    int current_i = i;
+
+
+// void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
+//     int ki_start = i;
+//     int ki_end = i;
+//     int current_i = i;
+//     std::string key = "root";
+
+//     // if (s[current_i] == '{') {
+//     //     current_i = parse_object(s, values, key, current_i);
+//     // } else if (s[current_i] == '[') {
+//     //     current_i = parse_array(s, values, key, current_i);
+//     // } else if (s[current_i] == '"') {
+//     //     current_i = parse_string(s, values, key, current_i);
+//     // } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
+//     //     current_i = parse_number(s, values, key, current_i);
+//     // } else if (s.substr(current_i, 4) == "true") {
+
+//     // } else if (s.substr(current_i, 5) == "false") {
+
+//     // } else if (s.substr(current_i, 4) == "null") {
+
+//     // } else {
+//     //     std::cout << "err at parse();" << std::endl;
+//     // }
+
+//     //ki_end = ki_start = current_i;
+//     // start from {
+    
+//     while(s[current_i] != '\0') {
+//         // skip spaces till '"'
+//         //current_i = skip_whitespaces(s, current_i);
+//         ki_end = ki_start = current_i;
+
+//         while(s[ki_start] != '"' && ki_start < s.length() - 1) ki_start++;
+//         ki_end = ki_start + 1;
+//         while(s[ki_end] != '"' && ki_end < s.length() - 1) ki_end++;
+
+//         current_i = get_key(s, key, ki_start);
+    
+//         current_i = skip_whitespaces(s, ki_end + 1);
+        
+//         if (s[current_i] == ':') {
+//             current_i = skip_whitespaces(s, current_i + 1);
+          
+//             if (s[current_i] == '"') {
+//                 current_i = parse_string(s, values, key, current_i);
+//             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
+//                 current_i = parse_number(s, values, key, current_i);
+//             } else if (s.substr(current_i, 4) == "true")  { 
+//                 current_i += 3;
+//                 values[key] = value(true);
+//             } else if (s.substr(current_i, 5) == "false") {
+//                 current_i += 4;
+//                 values[key] = value(false);
+//             } else if (s[current_i] == '[') {
+//                 current_i = parse_array(s, values, key, current_i);
+//             } else if (s.substr(current_i, 4) == "null") {
+//                 values[key] = value(nullptr);
+//             } else if (s[current_i] == '{') {
+//                 current_i = parse_object(s, values, key, current_i);
+//             } else {
+//                 std::cout << "else: " << s[current_i] << std::endl;
+//                 break;
+//             }
+//         } else {
+//             std::cout << "not : " << s[current_i] << std::endl;
+//         }
+        
+//         // skip last "not space value" 
+//         current_i++;
+//         // increment index at ","
+//         current_i = skip_whitespaces(s, current_i);
+//         // skip ","
+//         //current_i++;
+//     }
+// }
+
+void parse(std::string& s, object_t& root, int i = 0) {
     std::string key = "root";
 
-    // current_i = skip_whitespaces(s, current_i);
-
-    // if (s[current_i] == '{') {
-    //     current_i = parse_object(s, values, key, current_i);
-    // } else if (s[current_i] == '[') {
-    //     current_i = parse_array(s, values, key, current_i);
-    // } else if (s[current_i] == '"') {
-    //     current_i = parse_string(s, values, key, current_i);
-    // } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
-    //     current_i = parse_number(s, values, key, current_i);
-    // } else if (s.substr(current_i, 4) == "true") {
-
-    // } else if (s.substr(current_i, 5) == "false") {
-
-    // } else if (s.substr(current_i, 4) == "null") {
-
-    // } else {
-    //     std::cout << "err at parse();" << std::endl;
-    // }
-    
-    while(s[current_i] != '\0') {
-        // skip spaces till '"'
-        current_i = skip_whitespaces(s, current_i);
-        ki_start = current_i;
-        ki_end = current_i;
-
-        while(s[ki_start] != '"' && ki_start < s.length() - 1) ki_start++;
-        ki_end = ki_start + 1;
-        while(s[ki_end] != '"' && ki_end < s.length() - 1) ki_end++;
-
-        current_i = get_key(s, key, ki_start);
-    
-        current_i = skip_whitespaces(s, ki_end + 1);
-        
-        if (s[current_i] == ':') {
-            current_i = skip_whitespaces(s, current_i + 1);
-          
-            if (s[current_i] == '"') {
-                current_i = parse_string(s, values, key, current_i);
-            } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
-                current_i = parse_number(s, values, key, current_i);
-            } else if (s.substr(current_i, 4) == "true")  { 
-                current_i += 3;
-                values[key] = value(true);
-            } else if (s.substr(current_i, 5) == "false") {
-                current_i += 4;
-                values[key] = value(false);
-            } else if (s[current_i] == '[') {
-                current_i = parse_array(s, values, key, current_i);
-            } else if (s.substr(current_i, 4) == "null") {
-                values[key] = value(nullptr);
-            } else if (s[current_i] == '{') {
-                current_i = parse_object(s, values, key, current_i);
-            } else {
-                std::cout << "else: " << s[current_i] << std::endl;
-                break;
-            }
-        } else {
-            std::cout << "not : " << s[current_i] << std::endl;
-        }
-        
-        // skip last "not space value" 
-        current_i++;
-        // increment index at ","
-        current_i = skip_whitespaces(s, current_i);
-        // skip ","
-        current_i++;
+    if (s[i] == '{') {
+        i = parse_object(s, root, key, i);
+    } else if (s[i] == '[') {
+        i = parse_array(s, root, key, i);
+    } else if (s[i] == '"') {
+        i = parse_string(s, root, key, i);
+    } else if (s[i] >= 0x30 && s[i] <= 0x39) {
+        i = parse_number(s, root, key, i);
+    } else if (s.substr(i, 4) == "true") {
+        root[key] = value(true);
+    } else if (s.substr(i, 5) == "false") {
+        root[key] = value(false);
+    } else if (s.substr(i, 4) == "null") {
+        root[key] = value(nullptr);
+    } else {
+        std::cout << "err at parse();" << std::endl;
     }
 }
 
+void test() {
+    
+}
+
 int main() {
-    std::string json = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, 
+    std::string json1 = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, 
                         "hogebool": true, "piyo": "piyoyo", "arr": [10, 20, "arrstr", false], 
-                        "obj": {"objstr": "obobob", "objdouble": 1.234, "objbool": true, 
+                        "obj": { "objstr": "obobob", "objdouble": 1.234, "objbool": true, 
                         "objarr": [2,"ddd", false], "objobj": {"str": "stroj"}}})";
     std::string json2 = R"(["json2str": "hogehugapiyo", "json2num": 2.313, "json2bool": true])";
-    std::map<std::string, value> values;
+    
+    object_t root;
+    object_t values;
 
-    parse(json, values);
+    parse(json1, root);
+
+    values = root["root"].get_obj();
 
     std::cout << "======================" << std::endl;
     std::cout << "hoge: " << values["hoge"].get_str() << std::endl;
