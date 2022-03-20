@@ -11,7 +11,7 @@ using number_t = double;
 using array_t = std::vector<value>;
 using object_t = std::map<std::string, value>;
 
-int parse_object(std::string& s, object_t& obj, std::string& key, int i);
+object_t parse_object(std::string& s, int& i);
 
 enum type_t {
     unknown,
@@ -69,7 +69,7 @@ int skip_whitespaces(std::string& s, int i) {
     return i;
 }
 
-int parse_string(std::string& s, object_t& obj, std::string& key, int i) {
+std::string parse_string(std::string& s, int& i) {
     int start;
     int end;
     std::string v;
@@ -81,9 +81,10 @@ int parse_string(std::string& s, object_t& obj, std::string& key, int i) {
     while(s[end] != '"' && end < s.length() - 1) end++;
 
     v = s.substr(start + 1, end-start - 1);
-    obj[key] = value(v);
 
-    return end;
+    i = end;
+
+    return v;
 }
 
 int parse_number(std::string& s, object_t& values, std::string& key, int i) {
@@ -126,7 +127,7 @@ int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
         if (s[i] == '{') {
             std::string obj_key = "";
 
-            i = parse_object(s, new_obj, obj_key, i);
+            new_obj = parse_object(s, i);
             val = value(new_obj);
         }  else if (s[i] == '[') {
             array_t arr;
@@ -173,7 +174,7 @@ int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
     return i;
 }
 
-int parse_object(std::string& s, object_t& obj, std::string& key, int i) {
+object_t parse_object(std::string& s, int& i) {
     int end, current_i;
     std::string new_obj_key;
     object_t new_obj;
@@ -193,7 +194,8 @@ int parse_object(std::string& s, object_t& obj, std::string& key, int i) {
             current_i = skip_whitespaces(s, current_i + 1);
           
             if (s[current_i] == '"') {
-                current_i = parse_string(s, new_obj, new_obj_key, current_i);
+                std::string str = parse_string(s, current_i);
+                new_obj[new_obj_key] = value(str);
             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
                 current_i = parse_number(s, new_obj, new_obj_key, current_i);
             } else if (s.substr(current_i, 4) == "true")  { 
@@ -207,7 +209,8 @@ int parse_object(std::string& s, object_t& obj, std::string& key, int i) {
             } else if (s.substr(current_i, 4) == "null") {
                 new_obj[new_obj_key] = value(nullptr);
             } else if (s[current_i] == '{') {
-                current_i = parse_object(s, new_obj, new_obj_key, current_i);
+                object_t object = parse_object(s, current_i);
+                new_obj[new_obj_key] = value(object);
             } else {
                 std::cout << "else: " << s[current_i] << std::endl;
                 break;
@@ -220,29 +223,28 @@ int parse_object(std::string& s, object_t& obj, std::string& key, int i) {
         current_i++;
         current_i = skip_whitespaces(s, current_i);
     }
-    
-    obj[key] = value(new_obj);
 
-    return current_i;
+    i = current_i;
+
+    return new_obj;
 }
 
-void parse(std::string& s, object_t& root, int i = 0) {
-    std::string key = "root";
-
+void parse(std::string& s, value& v, int i = 0) {
     if (s[i] == '{') {
-        i = parse_object(s, root, key, i);
+        object_t object = parse_object(s, i);
+        v = value(object);
     } else if (s[i] == '[') {
-        i = parse_array(s, root, key, i);
+        //i = parse_array(s, root, key, i);
     } else if (s[i] == '"') {
-        i = parse_string(s, root, key, i);
+        //i = parse_string(s, root, key, i);
     } else if (s[i] >= 0x30 && s[i] <= 0x39) {
-        i = parse_number(s, root, key, i);
+        //i = parse_number(s, root, key, i);
     } else if (s.substr(i, 4) == "true") {
-        root[key] = value(true);
+        //root[key] = value(true);
     } else if (s.substr(i, 5) == "false") {
-        root[key] = value(false);
+        //root[key] = value(false);
     } else if (s.substr(i, 4) == "null") {
-        root[key] = value(nullptr);
+        //root[key] = value(nullptr);
     } else {
         std::cout << "err at parse();" << std::endl;
     }
@@ -259,12 +261,12 @@ int main() {
                         "objarr": [2,"ddd", false, {"arrint": 234}], "objobj": {"str": "stroj"}}})";
     std::string json2 = R"(["json2str": "hogehugapiyo", "json2num": 2.313, "json2bool": true])";
     
-    object_t root;
+    value v;
     object_t values;
 
-    parse(json1, root);
+    parse(json1, v);
 
-    values = root["root"].get_obj();
+    values = v.get_obj();
 
     std::cout << "======================" << std::endl;
     std::cout << "hoge: " << values["hoge"].get_str() << std::endl;
@@ -287,8 +289,7 @@ int main() {
             std::cout << (arr[i].get_bool() ? "true" :  "false");
         } else if (t == object_type) {
             object_t o = arr[i].get_obj();
-            object_t oo = o[""].get_obj();
-            std::cout << "arr[i].obj[arrs]=" << oo["arrs"].get_str() << std::endl;
+            std::cout << "arr[i].obj[arrs]=" << o["arrs"].get_str() << std::endl;
         }
 
         if (i != arr.size() -1) {
@@ -319,8 +320,7 @@ int main() {
             std::cout << (aarr[i].get_bool() ? "true" :  "false");
         } else if (t == object_type) {
             object_t o = aarr[i].get_obj();
-            object_t oo = o[""].get_obj();
-            std::cout << "arrint: " << oo["arrint"].get_num() << std::endl;
+            std::cout << "arrint: " << o["arrint"].get_num() << std::endl;
         }
 
         if (i != aarr.size() -1) {
