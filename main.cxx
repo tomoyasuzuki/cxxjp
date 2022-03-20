@@ -47,16 +47,19 @@ class value {
         type_t get_type() { return type; };
 };
 
-int get_key(std::string& s, std::string& key, int ki_start) {
-    int ki_end = ki_start;
+int get_key(std::string& s, std::string& key, int current_i) {
+    int start;
+    int end;
 
-    while(s[ki_start] != '"' && ki_start < s.length() - 1) ki_start++;
-    ki_end = ki_start + 1;
-    while(s[ki_end] != '"' && ki_end < s.length() - 1) ki_end++;
+    start = current_i;
+
+    while(s[start] != '"' && start < s.length() - 1) start++;
+    end = start + 1;
+    while(s[end] != '"' && end < s.length() - 1) end++;
     
-   key = s.substr(ki_start+1, ki_end-ki_start-1);
+   key = s.substr(start + 1, end - start - 1);
 
-   return ki_end + 1;
+   return ++end;
 }
 
 int skip_whitespaces(std::string& s, int i) {
