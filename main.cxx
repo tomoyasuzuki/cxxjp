@@ -108,39 +108,33 @@ int parse_number(std::string& s, object_t& values, std::string& key, int i) {
     
 }
 
-int parse_array(std::string& s, std::map<std::string, value>& values, std::string& key, int i) {
-    std::vector<value> arr;
-    int si;
+int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
+    array_t arr;
 
     while(s[i] != ']' && i < s.length() - 1) {
         std::istringstream ss;
-        std::string substr;
-        double v = 0;
-        std::string vs;
+        std::string str;
+        number_t num;
         value val;
+
         i++;
         i = skip_whitespaces(s, i);
-        si = i;
         
         if (s[i] == '"') {
-            int j = i;
-            i++;
-            std::cout << "ss" << s[i+1] << std::endl;
+            int start = ++i;
 
             while(s[i] != '"' && i < s.length() - 1) i++;
             
-            substr = s.substr(j, i-j+1);
-            val = value(substr);
+            val = value(s.substr(start, i-start));
         } else if (s[i] >= '0' && s[i] <= '9') {
-
+            int start = i;
+            
             while((s[i] >= '0' && s[i] <= '9') && i < s.length() - 1) i++; 
 
-            substr = s.substr(si, i-si);
-            ss = std::istringstream(substr);
-            ss >> v;
-            val = value(v);  
-            i -= 1; 
-            std::cout << "arrint" << s[i] << std::endl;      
+            ss = std::istringstream(s.substr(start, i-start));
+            ss >> num;
+            val = value(num);  
+            i -= 1;      
         } else if (s.substr(i,  4) == "true") {
             i += 3;
             val = value(true);
@@ -160,7 +154,7 @@ int parse_array(std::string& s, std::map<std::string, value>& values, std::strin
         i = skip_whitespaces(s, i);
     }
 
-    values[key] = value(arr);
+    obj[key] = value(arr);
 
     return i;
 }
@@ -196,15 +190,12 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
                 current_i = parse_string(s, obj, obj_key, current_i);
             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
                 current_i = parse_number(s, obj, obj_key, current_i);
-                std::cout << "aaa: " << s[current_i] << std::endl;
             } else if (s.substr(current_i, 4) == "true")  { 
                 current_i += 3;
                 obj[obj_key] = value(true);
-                std::cout << "trr: " << s[current_i] << std::endl;
             } else if (s.substr(current_i, 5) == "false") {
                 current_i += 4;
                 obj[obj_key] = value(false);
-                std::cout << "adada: " << s[current_i] << std::endl;
             } else if (s[current_i] == '[') {
                 current_i = parse_array(s, obj, obj_key, current_i);
             } else if (s.substr(current_i, 4) == "null") {
@@ -217,12 +208,11 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
             }
         } else {
             current_i = skip_whitespaces(s, current_i);
-            std::cout << "not: " << s[current_i] << std::endl;
+            std::cout << "err: cannot find coron" << s[current_i] << std::endl;
         }
 
         current_i++;
         current_i = skip_whitespaces(s, current_i);
-        std::cout << "end: " << s[current_i] << std::endl;
     }
     
     values[key] = value(obj);
