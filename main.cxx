@@ -28,40 +28,40 @@ class value {
         type_t type;
         std::string str;
         number_t num;
-        bool boolval;
+        bool bol;
         array_t arr;
         object_t obj;
-        nullptr_t nullval;
+        nullptr_t nul;
     public:
         value() : type(unknown) {};
         value(std::string s) : type(string_type), str(s) {};
         value(number_t n) : type(number_type), num(n) {};
-        value(bool b) : type(boolean_type), boolval(b) {};
+        value(bool b) : type(boolean_type), bol(b) {};
         value(array_t& a) : type(array_type), arr(a) {};
         value(object_t& o) : type(object_type), obj(o) {};
-        value(nullptr_t n) : type(null_type), nullval(n) {};
+        value(nullptr_t n) : type(null_type), nul(n) {};
         ~value() {};
         const std::string& get_str() { return str; };
         const double& get_num() { return num; };
-        const bool& get_bool() { return boolval; };
+        const bool& get_bool() { return bol; };
         const array_t& get_arr() { return arr; };
         const object_t& get_obj() { return obj; };
+        const nullptr_t& get_null() { return nul; };
         type_t get_type() { return type; };
 };
 
 int get_key(std::string& s, std::string& key, int current_i) {
     int start;
-    int end;
 
     start = current_i;
 
     while(s[start] != '"' && start < s.length() - 1) start++;
-    end = start + 1;
-    while(s[end] != '"' && end < s.length() - 1) end++;
+    current_i = start + 1;
+    while(s[current_i] != '"' && current_i < s.length() - 1) current_i++;
     
-   key = s.substr(start + 1, end - start - 1);
+   key = s.substr(start + 1, current_i - start - 1);
 
-   return ++end;
+   return ++current_i;
 }
 
 int skip_whitespaces(std::string& s, int i) {
