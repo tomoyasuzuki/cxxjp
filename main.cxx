@@ -74,18 +74,15 @@ int skip_last_non_space(int i) { return ++i; };
 
 std::string parse_string(std::string& s, int& i) {
     int start;
-    int end;
     std::string v;
 
     start = i;
 
     while(s[start] != '"' && start < s.length() - 1) start++;
-    end = start + 1;
-    while(s[end] != '"' && end < s.length() - 1) end++;
+    i = start + 1;
+    while(s[i] != '"' && i < s.length() - 1) i++;
 
-    v = s.substr(start + 1, end-start - 1);
-
-    i = end;
+    v = s.substr(start + 1, i - start - 1);
 
     return v;
 }
