@@ -67,7 +67,7 @@ int skip_whitespaces(std::string& s, int i) {
     return i;
 }
 
-int parse_string(std::string& s, std::map<std::string, value>& values, std::string& key, int i) {
+int parse_string(std::string& s, object_t& obj, std::string& key, int i) {
     int start;
     int end;
     std::string v;
@@ -79,7 +79,7 @@ int parse_string(std::string& s, std::map<std::string, value>& values, std::stri
     while(s[end] != '"' && end < s.length() - 1) end++;
 
     v = s.substr(start + 1, end-start - 1);
-    values[key] = value(v);
+    obj[key] = value(v);
 
     return end;
 }
@@ -159,14 +159,12 @@ int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
     return i;
 }
 
-int parse_object(std::string& s, std::map<std::string, value>& values, std::string& key, int i) {
+int parse_object(std::string& s, object_t& obj, std::string& key, int i) {
     int start, end, current_i;
-    std::string obj_key;
-    std::map<std::string, value> obj;
+    std::string new_obj_key;
+    object_t new_obj;
 
     start = end = current_i = i;
-
-    // next of {
     i++;
 
     while(s[current_i] != '}') {
@@ -178,29 +176,28 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
         end = start + 1;
         while(s[end] != '"' && end < s.length() - 1) end++;
 
-        current_i = get_key(s, obj_key, start);
-    
+        current_i = get_key(s, new_obj_key, start);
         current_i = skip_whitespaces(s, end + 1);
         
         if (s[current_i] == ':') {
             current_i = skip_whitespaces(s, current_i + 1);
           
             if (s[current_i] == '"') {
-                current_i = parse_string(s, obj, obj_key, current_i);
+                current_i = parse_string(s, new_obj, new_obj_key, current_i);
             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
-                current_i = parse_number(s, obj, obj_key, current_i);
+                current_i = parse_number(s, new_obj, new_obj_key, current_i);
             } else if (s.substr(current_i, 4) == "true")  { 
                 current_i += 3;
-                obj[obj_key] = value(true);
+                new_obj[new_obj_key] = value(true);
             } else if (s.substr(current_i, 5) == "false") {
                 current_i += 4;
-                obj[obj_key] = value(false);
+                new_obj[new_obj_key] = value(false);
             } else if (s[current_i] == '[') {
-                current_i = parse_array(s, obj, obj_key, current_i);
+                current_i = parse_array(s, new_obj, new_obj_key, current_i);
             } else if (s.substr(current_i, 4) == "null") {
-                values[obj_key] = value(nullptr);
+                new_obj[new_obj_key] = value(nullptr);
             } else if (s[current_i] == '{') {
-                //current_i = parse_object(s, obj, key, current_i+1);
+                current_i = parse_object(s, new_obj, new_obj_key, current_i);
             } else {
                 std::cout << "else: " << s[current_i] << std::endl;
                 break;
@@ -214,9 +211,9 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
         current_i = skip_whitespaces(s, current_i);
     }
     
-    values[key] = value(obj);
+    obj[key] = value(new_obj);
 
-    return current_i+1;
+    return current_i;
 }
 
 void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
@@ -277,7 +274,7 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
 }
 
 int main() {
-    std::string json = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, "hogebool": true, "piyo": "piyoyo", "arr": [10, 20, "arrstr", false], "obj": {"objstr": "obobob", "objdouble": 1.234, "objbool": true, "objarr": [2,"ddd", false]}})";
+    std::string json = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, "hogebool": true, "piyo": "piyoyo", "arr": [10, 20, "arrstr", false], "obj": {"objstr": "obobob", "objdouble": 1.234, "objbool": true, "objarr": [2,"ddd", false], "objobj": {"str": "stroj"}}})";
     std::map<std::string, value> values;
 
     parse(json, values);
@@ -314,6 +311,9 @@ int main() {
     std::cout << "objstr: " << obj["objstr"].get_str() << std::endl;
     std::cout << "objdouble: " << obj["objdouble"].get_num() << std::endl;
     std::cout << "objbool: " << (obj["objbool"].get_num() ? "true" : "false") << std::endl;
+    
+    object_t obj2 = obj["objobj"].get_obj();
+    std::cout << "str: " << obj2["str"].get_str() << std::endl;
 
     std::vector<value> aarr = obj["objarr"].get_arr();
     std::cout << "aarr: ";
