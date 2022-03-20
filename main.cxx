@@ -50,7 +50,8 @@ class value {
         type_t get_type() { return type; };
 };
 
-int get_key(std::string& s, std::string& key, int current_i) {
+std::string get_key(std::string& s, int& current_i) {
+    std::string key;
     int start;
 
     start = current_i;
@@ -59,9 +60,10 @@ int get_key(std::string& s, std::string& key, int current_i) {
     current_i = start + 1;
     while(s[current_i] != '"' && current_i < s.length() - 1) current_i++;
     
-   key = s.substr(start + 1, current_i - start - 1);
+    key = s.substr(start + 1, current_i - start - 1);
 
-   return ++current_i;
+    current_i++;
+    return key;
 }
 
 int skip_whitespaces(std::string& s, int i) {
@@ -100,7 +102,7 @@ number_t parse_number(std::string& s, int& i) {
         return 0;
     }
 
-    while((s[i] >= '0' && s[i] <= '9') && i < s.length() - 1 || s[i] == '.' || s[i] == 'e') i++;
+    while((s[i] >= '0' && s[i] <= '9') && i < s.length() || s[i] == '.' || s[i] == 'e') i++;
 
     substr = s.substr(start, i-start);
     ss = std::istringstream(substr);
@@ -138,7 +140,7 @@ array_t parse_array(std::string& s, int& i) {
             number_t num;
             int start = i;
             
-            while((s[i] >= '0' && s[i] <= '9') && i < s.length() - 1) i++; 
+            while((s[i] >= '0' && s[i] <= '9' || s[i] == '.' || s[i] == 'e') && i < s.length() - 1) i++; 
 
             ss = std::istringstream(s.substr(start, i-start));
             ss >> num;
@@ -171,7 +173,7 @@ object_t parse_object(std::string& s, int& i) {
     std::string key;
 
     while(s[i] != '}') {
-        i = get_key(s, key, i);
+        key = get_key(s, i);
         i = skip_whitespaces(s, i);
         
         if (s[i] == ':') {
@@ -218,17 +220,20 @@ void parse(std::string& s, value& v, int i = 0) {
         object_t object = parse_object(s, i);
         v = value(object);
     } else if (s[i] == '[') {
-        //i = parse_array(s, root, key, i);
+        array_t arr = parse_array(s, i);
+        v = value(arr);
     } else if (s[i] == '"') {
-        //i = parse_string(s, root, key, i);
+        std::string str = parse_string(s, i);
+        v = value(str);
     } else if (s[i] >= 0x30 && s[i] <= 0x39) {
-        //i = parse_number(s, root, key, i);
+        number_t num = parse_number(s, i);
+        v = value(num);
     } else if (s.substr(i, 4) == "true") {
-        //root[key] = value(true);
+        v = value(true);
     } else if (s.substr(i, 5) == "false") {
-        //root[key] = value(false);
+        v = value(false);
     } else if (s.substr(i, 4) == "null") {
-        //root[key] = value(nullptr);
+        v = value(nullptr);
     } else {
         std::cout << "err at parse();" << std::endl;
     }
@@ -238,81 +243,98 @@ void test() {
 
 }
 
-int main() {
-    std::string json1 = R"({"hoge": "huga", "hogeint": 543, "hugaint": 5.232, "piyoint": 1e9, 
-                        "hogebool": true, "piyo": "piyoyo", "arr": [10, 20, "arrstr", false, {"arrs": "arrdd"}], 
-                        "obj": { "objstr": "obobob", "objdouble": 1.234, "objbool": true, 
-                        "objarr": [2,"ddd", false, {"arrint": 234}], "objobj": {"str": "stroj"}}})";
-    std::string json2 = R"(["json2str": "hogehugapiyo", "json2num": 2.313, "json2bool": true])";
-    
-    value v;
-    object_t values;
+void print_array(array_t& arr) {
+    std::cout << "[";
 
-    parse(json1, v);
-
-    values = v.get_obj();
-
-    std::cout << "======================" << std::endl;
-    std::cout << "hoge: " << values["hoge"].get_str() << std::endl;
-    std::cout << "piyo: " << values["piyo"].get_str() << std::endl;
-    std::cout << "hogeint: " << values["hogeint"].get_num() << std::endl;
-    std::cout << "hugaint: " << values["hugaint"].get_num() << std::endl;
-    std::cout << "piyoint: " << values["piyoint"].get_num() << std::endl;
-    std::cout << "hogebool: " << (values["hogebool"].get_bool() ? "true" : "false") << std::endl;
-    
-    std::vector<value> arr = values["arr"].get_arr();
-    std::cout << "arr: ";
     for (int i = 0; i < arr.size(); i++) {
-        type_t t = arr[i].get_type();
-
-        if (t == string_type) {
-            std::cout << arr[i].get_str();
-        } else if (t == number_type) {
+        type_t type = arr[i].get_type();
+        if (type == string_type) {
+            std::cout << '"' << arr[i].get_str() << '"';
+        } else if (type == number_type) {
             std::cout << arr[i].get_num();
-        } else if (t == boolean_type) {
-            std::cout << (arr[i].get_bool() ? "true" :  "false");
-        } else if (t == object_type) {
-            object_t o = arr[i].get_obj();
-            std::cout << "arr[i].obj[arrs]=" << o["arrs"].get_str() << std::endl;
+        } else if (type == boolean_type) {
+            std::cout << (arr[i].get_bool() ? "true" : "false");
+        } else if (type == null_type) {
+            std::cout << "null";
+        } else if (type == array_type) {
+            array_t a = arr[i].get_arr();
+            print_array(a);
+        } else if (type == object_type) {
+            std::cout << "{}";
         }
 
-        if (i != arr.size() -1) {
-            std::cout << ",";
-        } else {
-            std::cout << "\n";
+        if (i != arr.size() - 1) {
+            std::cout << ", ";
         }
     }
 
-    std::map<std::string, value> obj = values["obj"].get_obj();
-    std::cout << "objstr: " << obj["objstr"].get_str() << std::endl;
-    std::cout << "objdouble: " << obj["objdouble"].get_num() << std::endl;
-    std::cout << "objbool: " << (obj["objbool"].get_num() ? "true" : "false") << std::endl;
+    std::cout << "]";
+}
+
+int main() {
+    std::string json1 = R"({"string": "hoge", "int": 543, "double1": 5.232, "double2": 1e9, "null": null,
+                        "boolean": true, "array": [10, 20, "string", false, {"string": "string"}], 
+                        "object": { "string": "object_string", "object_double": 1.234, "object_boolean": true, 
+                        "object_array": [2,"hogehuga", false, {"number": 234}], "object_object": {"hoge": "huga"}}})";
+    std::string json2 = R"(["hoge", 2.313, true, [10], {"object": "object_string"}])";
+    std::string json3 = R"("hoge")";
+    std::string json4 = R"(100)";
+    std::string json5 = R"(false)";
+    std::string json6 = R"(null)";
     
-    object_t obj2 = obj["objobj"].get_obj();
-    std::cout << "str: " << obj2["str"].get_str() << std::endl;
+    value v1, v2, v3, v4, v5, v6;
 
-    array_t aarr = obj["objarr"].get_arr();
-    std::cout << "aarr: ";
-    for (int i = 0; i < aarr.size(); i++) {
-        type_t t = aarr[i].get_type();
+    object_t obj;
+    array_t arr;
+    std::string str;
+    number_t num;
+    bool bol;
+    nullptr_t nul;
 
-        if (t == string_type) {
-            std::cout << aarr[i].get_str();
-        } else if (t == number_type) {
-            std::cout << aarr[i].get_num();
-        } else if (t == boolean_type) {
-            std::cout << (aarr[i].get_bool() ? "true" :  "false");
-        } else if (t == object_type) {
-            object_t o = aarr[i].get_obj();
-            std::cout << "arrint: " << o["arrint"].get_num() << std::endl;
-        }
+    parse(json1, v1);
+    parse(json2, v2);
+    parse(json3, v3);
+    parse(json4, v4);
+    parse(json5, v5);
+    parse(json6, v6);
 
-        if (i != aarr.size() -1) {
-            std::cout << ",";
-        } else {
-            std::cout << "\n";
-        }
-    }
-   
+    obj = v1.get_obj();
+    arr = v2.get_arr();
+    str = v3.get_str();
+    num = v4.get_num();
+    bol = v5.get_bool();
+    nul = v6.get_null();
+
+    // ================= v1 test =========================
+
+    // string
+    std::cout << '"' << obj["string"].get_str() << '"' << std::endl;
+    // number
+    std::cout << obj["double1"].get_num() << std::endl;
+    // boolean
+    std::cout << (obj["boolean"].get_bool() ? "true" : "false") << std::endl;
+    // null
+    std::cout << (obj["null"].get_null() == nullptr ? "nullptr" : "") << std::endl;
+    // array
+    array_t a = obj["array"].get_arr();
+    print_array(a);
+    std::cout << "\n";
+    // object
+    object_t o = obj["obj"].get_obj();
+
+    // ================= v2 test =========================
+    std::cout << "v2 = ";
+    print_array(arr);
+    std::cout << "\n";
+    // ================= v3 test =========================
+    std::cout << "v3 = " << '"' << str << '"' << std::endl;
+    // ================= v4 test =========================
+    std::cout << "v4 =  " << num << std::endl;
+    // ================= v5 test =========================
+    std::cout << "v5 = " << (bol ? "true" : "false") << std::endl;
+    // ================= v6 test =========================
+    std::cout << "v6 = " << (nul == nullptr ? "nullptr" : "") << std::endl;
+
+    
     return 1;
 } 
