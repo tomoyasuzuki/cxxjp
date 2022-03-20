@@ -21,7 +21,7 @@ enum type_t {
     array_type,
     object_type,
     null_type
-}; 
+};
 
 class value {
     private: 
@@ -68,6 +68,9 @@ int skip_whitespaces(std::string& s, int i) {
     while(s[i] == ' ' && i < s.length() - 1) i++;
     return i;
 }
+
+int skip_first_non_space_or_comma(int i) { return ++i; };
+int skip_last_non_space(int i) { return ++i; };
 
 std::string parse_string(std::string& s, int& i) {
     int start;
@@ -117,55 +120,49 @@ array_t parse_array(std::string& s, int& i) {
 
     while(s[i] != ']' && i < s.length() - 1) {
         std::istringstream ss;
-        object_t new_obj;
-        std::string str;
-        number_t num;
-        value val;
+        value v;
 
-        i++;
+        i = skip_first_non_space_or_comma(i);
         i = skip_whitespaces(s, i);
         
         if (s[i] == '{') {
-            std::string obj_key = "";
-
-            new_obj = parse_object(s, i);
-            val = value(new_obj);
+            object_t obj = parse_object(s, i);
+            v = value(obj);
         }  else if (s[i] == '[') {
             array_t arr = parse_array(s, i);
-            val = value(arr);
+            v = value(arr);
         } else if (s[i] == '"') {
             int start = ++i;
 
             while(s[i] != '"' && i < s.length() - 1) i++;
             
-            val = value(s.substr(start, i-start));
+            v = value(s.substr(start, i-start));
         } else if (s[i] >= '0' && s[i] <= '9') {
+            number_t num;
             int start = i;
             
             while((s[i] >= '0' && s[i] <= '9') && i < s.length() - 1) i++; 
 
             ss = std::istringstream(s.substr(start, i-start));
             ss >> num;
-            val = value(num);  
+            v = value(num);  
             i -= 1;      
         } else if (s.substr(i,  4) == "true") {
             i += 3;
-            val = value(true);
+            v = value(true);
         } else if (s.substr(i, 5) == "false") {
             i += 4;
-            val = value(false);
+            v = value(false);
         } else if (s.substr(i, 4) == "null") {
             i += 3;
-            val = value(nullptr);
+            v = value(nullptr);
         } else {
             std::cout << "unknown: " << s[i] << std::endl;
         }
 
-        arr.push_back(val);
+        arr.push_back(v);
 
-        // skip last not space value
-        i++;
-        // skipt till ","
+        i = skip_last_non_space(i);
         i = skip_whitespaces(s, i);
     }
 
@@ -173,60 +170,50 @@ array_t parse_array(std::string& s, int& i) {
 }
 
 object_t parse_object(std::string& s, int& i) {
-    int end, current_i;
-    std::string new_obj_key;
-    object_t new_obj;
+    object_t obj;
+    std::string key;
 
-    end = current_i = i;
-
-    while(s[current_i] != '}') {
-
-        while(s[current_i] != '"' && current_i < s.length() - 1) current_i++;
-        end = current_i + 1;
-        while(s[end] != '"' && end < s.length() - 1) end++;
-
-        current_i = get_key(s, new_obj_key, current_i);
-        current_i = skip_whitespaces(s, end + 1);
+    while(s[i] != '}') {
+        i = get_key(s, key, i);
+        i = skip_whitespaces(s, i);
         
-        if (s[current_i] == ':') {
-            current_i = skip_whitespaces(s, current_i + 1);
+        if (s[i] == ':') {
+            i = skip_whitespaces(s, i + 1);
           
-            if (s[current_i] == '"') {
-                std::string str = parse_string(s, current_i);
-                new_obj[new_obj_key] = value(str);
-            } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
-                number_t num = parse_number(s, current_i);
-                new_obj[new_obj_key] = value(num);
-            } else if (s.substr(current_i, 4) == "true")  { 
-                current_i += 3;
-                new_obj[new_obj_key] = value(true);
-            } else if (s.substr(current_i, 5) == "false") {
-                current_i += 4;
-                new_obj[new_obj_key] = value(false);
-            } else if (s[current_i] == '[') {
-                array_t arr = parse_array(s, current_i);
-                new_obj[new_obj_key] = value(arr);
-            } else if (s.substr(current_i, 4) == "null") {
-                new_obj[new_obj_key] = value(nullptr);
-            } else if (s[current_i] == '{') {
-                object_t object = parse_object(s, current_i);
-                new_obj[new_obj_key] = value(object);
+            if (s[i] == '"') {
+                std::string str = parse_string(s, i);
+                obj[key] = value(str);
+            } else if (s[i] >= 0x30 && s[i] <= 0x39) {
+                number_t num = parse_number(s, i);
+                obj[key] = value(num);
+            } else if (s.substr(i, 4) == "true")  { 
+                i += 3;
+                obj[key] = value(true);
+            } else if (s.substr(i, 5) == "false") {
+                i += 4;
+                obj[key] = value(false);
+            } else if (s[i] == '[') {
+                array_t arr = parse_array(s, i);
+                obj[key] = value(arr);
+            } else if (s.substr(i, 4) == "null") {
+                obj[key] = value(nullptr);
+            } else if (s[i] == '{') {
+                object_t object = parse_object(s, i);
+                obj[key] = value(object);
             } else {
-                std::cout << "else: " << s[current_i] << std::endl;
+                std::cout << "else: " << s[i] << std::endl;
                 break;
             }
         } else {
-            current_i = skip_whitespaces(s, current_i);
-            std::cout << "err: cannot find coron" << s[current_i] << std::endl;
+            i = skip_whitespaces(s, i);
+            std::cout << "err: cannot find coron" << s[i] << std::endl;
         }
 
-        current_i++;
-        current_i = skip_whitespaces(s, current_i);
+        i = skip_last_non_space(i);
+        i = skip_whitespaces(s, i);
     }
 
-    i = current_i;
-
-    return new_obj;
+    return obj;
 }
 
 void parse(std::string& s, value& v, int i = 0) {
