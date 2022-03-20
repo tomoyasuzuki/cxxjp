@@ -5,40 +5,46 @@
 #include <map>
 #include <sstream>
 
-enum type {
+class value;
+
+using number_t = double;
+using array_t = std::vector<value>;
+using object_t = std::map<std::string, value>;
+
+enum type_t {
     unknown,
-    string,
-    double_type,
-    boolean,
-    array,
-    object,
+    string_type,
+    number_type,
+    boolean_type,
+    array_type,
+    object_type,
     null_type
 }; 
 
 class value {
     private: 
-        type t;
-        std::string s;
-        double d;
-        bool b;
-        std::vector<value> a;
-        nullptr_t n;
-        std::map<std::string, value> o;
+        type_t type;
+        std::string str;
+        number_t num;
+        bool boolval;
+        array_t arr;
+        object_t obj;
+        nullptr_t nullval;
     public:
-        value() : t(unknown) {};
-        value(std::string str) : t(string), s(str) {};
-        value(double dv) : t(double_type), d(dv) {};
-        value(bool bv) : t(boolean), b(bv) {};
-        value(std::vector<value>& arr) : t(array), a(arr) {};
-        value(nullptr_t nl) : t(null_type), n(nl) {};
-        value(std::map<std::string, value>& ob) : t(object), o(ob) {};
+        value() : type(unknown) {};
+        value(std::string s) : type(string_type), str(s) {};
+        value(number_t n) : type(number_type), num(n) {};
+        value(bool b) : type(boolean_type), boolval(b) {};
+        value(array_t& a) : type(array_type), arr(a) {};
+        value(object_t& o) : type(object_type), obj(o) {};
+        value(nullptr_t n) : type(null_type), nullval(n) {};
         ~value() {};
-        const std::string& get_str() { return s; };
-        const double& get_double() { return d; };
-        const bool& get_boolean() { return b; };
-        const std::vector<value>& get_arr() { return a; };
-        const std::map<std::string, value>& get_obj() { return o; };
-        type gettype() { return t; };
+        const std::string& get_str() { return str; };
+        const double& get_num() { return num; };
+        const bool& get_bool() { return boolval; };
+        const array_t& get_arr() { return arr; };
+        const object_t& get_obj() { return obj; };
+        type_t get_type() { return type; };
 };
 
 int get_key(std::string& s, std::string& key, int ki_start) {
@@ -283,22 +289,22 @@ int main() {
     std::cout << "======================" << std::endl;
     std::cout << "hoge: " << values["hoge"].get_str() << std::endl;
     std::cout << "piyo: " << values["piyo"].get_str() << std::endl;
-    std::cout << "hogeint: " << values["hogeint"].get_double() << std::endl;
-    std::cout << "hugaint: " << values["hugaint"].get_double() << std::endl;
-    std::cout << "piyoint: " << values["piyoint"].get_double() << std::endl;
-    std::cout << "hogebool: " << (values["hogebool"].get_boolean() ? "true" : "false") << std::endl;
+    std::cout << "hogeint: " << values["hogeint"].get_num() << std::endl;
+    std::cout << "hugaint: " << values["hugaint"].get_num() << std::endl;
+    std::cout << "piyoint: " << values["piyoint"].get_num() << std::endl;
+    std::cout << "hogebool: " << (values["hogebool"].get_bool() ? "true" : "false") << std::endl;
     
     std::vector<value> arr = values["arr"].get_arr();
     std::cout << "arr: ";
     for (int i = 0; i < arr.size(); i++) {
-        type t = arr[i].gettype();
+        type_t t = arr[i].get_type();
 
-        if (t == string) {
+        if (t == string_type) {
             std::cout << arr[i].get_str();
-        } else if (t == double_type) {
-            std::cout << arr[i].get_double();
-        } else if (t == boolean) {
-            std::cout << (arr[i].get_boolean() ? "true" :  "false");
+        } else if (t == number_type) {
+            std::cout << arr[i].get_num();
+        } else if (t == boolean_type) {
+            std::cout << (arr[i].get_bool() ? "true" :  "false");
         }
 
         if (i != arr.size() -1) {
@@ -310,20 +316,20 @@ int main() {
 
     std::map<std::string, value> obj = values["obj"].get_obj();
     std::cout << "objstr: " << obj["objstr"].get_str() << std::endl;
-    std::cout << "objdouble: " << obj["objdouble"].get_double() << std::endl;
-    std::cout << "objbool: " << (obj["objbool"].get_boolean() ? "true" : "false") << std::endl;
+    std::cout << "objdouble: " << obj["objdouble"].get_num() << std::endl;
+    std::cout << "objbool: " << (obj["objbool"].get_num() ? "true" : "false") << std::endl;
 
     std::vector<value> aarr = obj["objarr"].get_arr();
     std::cout << "aarr: ";
     for (int i = 0; i < aarr.size(); i++) {
-        type t = aarr[i].gettype();
+        type_t t = aarr[i].get_type();
 
-        if (t == string) {
+        if (t == string_type) {
             std::cout << aarr[i].get_str();
-        } else if (t == double_type) {
-            std::cout << aarr[i].get_double();
-        } else if (t == boolean) {
-            std::cout << (aarr[i].get_boolean() ? "true" :  "false");
+        } else if (t == number_type) {
+            std::cout << aarr[i].get_num();
+        } else if (t == boolean_type) {
+            std::cout << (aarr[i].get_bool() ? "true" :  "false");
         }
 
         if (i != aarr.size() -1) {
