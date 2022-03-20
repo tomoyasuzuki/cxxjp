@@ -87,7 +87,7 @@ std::string parse_string(std::string& s, int& i) {
     return v;
 }
 
-int parse_number(std::string& s, object_t& values, std::string& key, int i) {
+number_t parse_number(std::string& s, int& i) {
     int start;
     number_t num;
     std::string substr;
@@ -105,9 +105,10 @@ int parse_number(std::string& s, object_t& values, std::string& key, int i) {
     substr = s.substr(start, i-start);
     ss = std::istringstream(substr);
     ss >> num;
-    values[key] = value(num);
 
-    return i-1;
+    i--;
+
+    return num;
     
 }
 
@@ -197,7 +198,8 @@ object_t parse_object(std::string& s, int& i) {
                 std::string str = parse_string(s, current_i);
                 new_obj[new_obj_key] = value(str);
             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
-                current_i = parse_number(s, new_obj, new_obj_key, current_i);
+                number_t num = parse_number(s, current_i);
+                new_obj[new_obj_key] = value(num);
             } else if (s.substr(current_i, 4) == "true")  { 
                 current_i += 3;
                 new_obj[new_obj_key] = value(true);
