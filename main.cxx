@@ -160,11 +160,11 @@ int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
 }
 
 int parse_object(std::string& s, std::map<std::string, value>& values, std::string& key, int i) {
-    int ki_start = i;
-    int ki_end = i;
-    int current_i = i;
+    int start, end, current_i;
     std::string obj_key;
     std::map<std::string, value> obj;
+
+    start = end = current_i = i;
 
     // next of {
     i++;
@@ -172,16 +172,15 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
     while(s[current_i] != '}') {
         current_i++;
         current_i = skip_whitespaces(s, current_i);
-        ki_start = current_i;
-        ki_end = current_i;
+        start = end = current_i;
 
-        while(s[ki_start] != '"' && ki_start < s.length() - 1) ki_start++;
-        ki_end = ki_start + 1;
-        while(s[ki_end] != '"' && ki_end < s.length() - 1) ki_end++;
+        while(s[start] != '"' && start < s.length() - 1) start++;
+        end = start + 1;
+        while(s[end] != '"' && end < s.length() - 1) end++;
 
-        current_i = get_key(s, obj_key, ki_start);
+        current_i = get_key(s, obj_key, start);
     
-        current_i = skip_whitespaces(s, ki_end + 1);
+        current_i = skip_whitespaces(s, end + 1);
         
         if (s[current_i] == ':') {
             current_i = skip_whitespaces(s, current_i + 1);
