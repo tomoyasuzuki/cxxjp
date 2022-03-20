@@ -68,37 +68,41 @@ int skip_whitespaces(std::string& s, int i) {
 }
 
 int parse_string(std::string& s, std::map<std::string, value>& values, std::string& key, int i) {
-    int vi_start = i;
-    int vi_end = i;
+    int start;
+    int end;
     std::string v;
 
-    while(s[vi_start] != '"' && vi_start < s.length() - 1) vi_start++;
-    vi_end = vi_start + 1;
-    while(s[vi_end] != '"' && vi_end < s.length() - 1) vi_end++;
+    start = i;
 
-    v = s.substr(vi_start+1, vi_end-vi_start-1);
+    while(s[start] != '"' && start < s.length() - 1) start++;
+    end = start + 1;
+    while(s[end] != '"' && end < s.length() - 1) end++;
+
+    v = s.substr(start + 1, end-start - 1);
     values[key] = value(v);
 
-    return vi_end;
+    return end;
 }
 
-double parse_double(std::string& s, std::map<std::string, value>& values, std::string& key, int i) {
-    int si = i;
-    double v = 0;
+int parse_number(std::string& s, object_t& values, std::string& key, int i) {
+    int start;
+    number_t num;
     std::string substr;
     std::istringstream ss;
+
+    start = i;
     
     if (s[i] < 0x30 || s[i] > 0x39) {
-        std::cout << "error!!(parse_double_type)" << std::endl;
+        std::cout << "error!!(parse_number_type)" << std::endl;
         return 0;
     }
 
     while((s[i] >= '0' && s[i] <= '9') && i < s.length() - 1 || s[i] == '.' || s[i] == 'e') i++;
 
-    substr = s.substr(si, i-si);
+    substr = s.substr(start, i-start);
     ss = std::istringstream(substr);
-    ss >> v;
-    values[key] = value(v);
+    ss >> num;
+    values[key] = value(num);
 
     return i-1;
     
@@ -191,7 +195,7 @@ int parse_object(std::string& s, std::map<std::string, value>& values, std::stri
             if (s[current_i] == '"') {
                 current_i = parse_string(s, obj, obj_key, current_i);
             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
-                current_i = parse_double(s, obj, obj_key, current_i);
+                current_i = parse_number(s, obj, obj_key, current_i);
                 std::cout << "aaa: " << s[current_i] << std::endl;
             } else if (s.substr(current_i, 4) == "true")  { 
                 current_i += 3;
@@ -253,7 +257,7 @@ void parse(std::string& s, std::map<std::string, value>& values, int i=0) {
                 current_i = parse_string(s, values, key, current_i);
                 std::cout << "after string " << s[current_i] << std::endl;
             } else if (s[current_i] >= 0x30 && s[current_i] <= 0x39) {
-                current_i = parse_double(s, values, key, current_i);
+                current_i = parse_number(s, values, key, current_i);
             } else if (s.substr(current_i, 4) == "true")  { 
                 current_i += 3;
                 values[key] = value(true);
