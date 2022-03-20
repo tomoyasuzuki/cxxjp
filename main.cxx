@@ -112,7 +112,7 @@ number_t parse_number(std::string& s, int& i) {
     
 }
 
-int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
+array_t parse_array(std::string& s, int& i) {
     array_t arr;
 
     while(s[i] != ']' && i < s.length() - 1) {
@@ -131,9 +131,8 @@ int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
             new_obj = parse_object(s, i);
             val = value(new_obj);
         }  else if (s[i] == '[') {
-            array_t arr;
-            i = parse_array(s, obj, key, i);
-            
+            array_t arr = parse_array(s, i);
+            val = value(arr);
         } else if (s[i] == '"') {
             int start = ++i;
 
@@ -170,9 +169,7 @@ int parse_array(std::string& s, object_t& obj, std::string& key, int i) {
         i = skip_whitespaces(s, i);
     }
 
-    obj[key] = value(arr);
-
-    return i;
+    return arr;
 }
 
 object_t parse_object(std::string& s, int& i) {
@@ -207,7 +204,8 @@ object_t parse_object(std::string& s, int& i) {
                 current_i += 4;
                 new_obj[new_obj_key] = value(false);
             } else if (s[current_i] == '[') {
-                current_i = parse_array(s, new_obj, new_obj_key, current_i);
+                array_t arr = parse_array(s, current_i);
+                new_obj[new_obj_key] = value(arr);
             } else if (s.substr(current_i, 4) == "null") {
                 new_obj[new_obj_key] = value(nullptr);
             } else if (s[current_i] == '{') {
