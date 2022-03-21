@@ -46,4 +46,5 @@ int main() {
 - Enable using only the header-file.
 - Implement other useful member functions.
 - Support for file input.
-- Suppot for escape character.
+- Support for escape character.
+- Support for cxxjp namespace.
