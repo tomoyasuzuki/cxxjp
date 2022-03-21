@@ -48,3 +48,4 @@ int main() {
 - Support for file input.
 - Support for escape character.
 - Support for cxxjp namespace.
+- Support for error message.
