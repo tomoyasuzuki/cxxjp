@@ -49,15 +49,9 @@ namespace cxxjp {
             value(array_t& a) : type(array_type), arr(a) {};
             value(object_t& o) : type(object_type), obj(o) {};
             ~value() {};
-            const std::string& get_str() { return str; };
-            const double& get_num() { return num; };
-            const bool& get_bool() { return bol; };
-            const array_t& get_arr() { return arr; };
-            const object_t& get_obj() { return obj; };
-            const nullptr_t& get_null() { return nul; };
             type_t get_type() { return type; };
             std::string dump() const;
-            template <typename T> T& get() {
+            template <typename T> T& get() const {
                 if (type == string_type) {
                     return *(T*)(void*)(&str);
                 } else if (type == number_type) {
