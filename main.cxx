@@ -36,17 +36,17 @@ namespace cxxjp {
             std::string str;
             number_t num;
             bool bol;
+            nullptr_t nul;
             array_t arr;
             object_t obj;
-            nullptr_t nul;
         public:
             value() : type(unknown) {};
             value(std::string s) : type(string_type), str(s) {};
             value(number_t n) : type(number_type), num(n) {};
             value(bool b) : type(boolean_type), bol(b) {};
+            value(nullptr_t n) : type(null_type), nul(n) {};
             value(array_t& a) : type(array_type), arr(a) {};
             value(object_t& o) : type(object_type), obj(o) {};
-            value(nullptr_t n) : type(null_type), nul(n) {};
             ~value() {};
             const std::string& get_str() { return str; };
             const double& get_num() { return num; };
@@ -56,10 +56,24 @@ namespace cxxjp {
             const nullptr_t& get_null() { return nul; };
             type_t get_type() { return type; };
             std::string dump() const;
+            template <typename T> T& get() {
+                if (type == string_type) {
+                    return *(T*)(void*)(&str);
+                } else if (type == number_type) {
+                    return *(T*)(void*)(&num);
+                } else if (type == boolean_type) {
+                    return *(T*)(void*)(&bol);
+                } else if (type == null_type) {
+                    return *(T*)(void*)(&nul);
+                } else if (type == array_type) {
+                    return *(T*)(void*)(&arr);
+                } else if (type == object_type) {
+                    return *(T*)(void*)(&obj);
+                } else {
+                    return *(T*)(void*)nullptr;
+                }
+            }
     };
-
-    // std::cout << obj.dump() << std::endl;
-    // std::cout << arr.dump() << std::endl;
 
     std::string value::dump() const {
         std::stringstream ss;
@@ -307,38 +321,6 @@ namespace cxxjp {
             std::cout << "err at parse();" << std::endl;
         }
     }
-
-    void test() {
-
-    }
-
-    void print_array(array_t& arr) {
-        std::cout << "[";
-
-        for (int i = 0; i < arr.size(); i++) {
-            type_t type = arr[i].get_type();
-            if (type == string_type) {
-                std::cout << '"' << arr[i].get_str() << '"';
-            } else if (type == number_type) {
-                std::cout << arr[i].get_num();
-            } else if (type == boolean_type) {
-                std::cout << (arr[i].get_bool() ? "true" : "false");
-            } else if (type == null_type) {
-                std::cout << "null";
-            } else if (type == array_type) {
-                array_t a = arr[i].get_arr();
-                print_array(a);
-            } else if (type == object_type) {
-                std::cout << "{}";
-            }
-
-            if (i != arr.size() - 1) {
-                std::cout << ", ";
-            }
-        }
-
-        std::cout << "]";
-    }
 }
 
 
@@ -353,31 +335,45 @@ int main() {
     std::string json5 = R"(false)";
     std::string json6 = R"(null)";
     
-    cxxjp::value v1, v2, v3, v4, v5, v6;
+    cxxjp::value value1, value2, value3, value4, value5, value6;
 
-    cxxjp::object_t obj;
-    cxxjp::array_t arr;
-    std::string str;
-    cxxjp::number_t num;
-    bool bol;
-    nullptr_t nul;
+    cxxjp::object_t object;
+    cxxjp::array_t array;
+    std::string string;
+    cxxjp::number_t number;
+    bool boolean;
+    nullptr_t null;
 
-    parse(json1, v1);
-    parse(json2, v2);
-    parse(json3, v3);
-    parse(json4, v4);
-    parse(json5, v5);
-    parse(json6, v6);
+    parse(json1, value1);
+    parse(json2, value2);
+    parse(json3, value3);
+    parse(json4, value4);
+    parse(json5, value5);
+    parse(json6, value6);
 
     // Dump 
-    std::cout << v1.dump() << std::endl;
-    std::cout << v2.dump() << std::endl;
-    std::cout << v3.dump() << std::endl;
-    std::cout << v4.dump() << std::endl;
-    std::cout << v5.dump() << std::endl;
-    std::cout << v6.dump() << std::endl;
+    std::cout << value1.dump() << std::endl;
+    std::cout << value2.dump() << std::endl;
+    std::cout << value3.dump() << std::endl;
+    std::cout << value4.dump() << std::endl;
+    std::cout << value5.dump() << std::endl;
+    std::cout << value6.dump() << std::endl;
 
     // Read
+    object = value1.get<cxxjp::object_t>();
+    array = value2.get<cxxjp::array_t>();
+    string = value3.get<std::string>();
+    number = value4.get<cxxjp::number_t>();
+    boolean = value5.get<bool>();
+    null = value6.get<nullptr_t>();
+
+    std::cout << "json1[\"string\"] = " << object["string"].get<std::string>() << std::endl;
+    std::cout << "json2[4] = " << array[4].dump() << std::endl;
+    std::cout << "json3 = " << '"' << string << '"' << std::endl;
+    std::cout << "json4 = " << number << std::endl;
+    std::cout << "json5 = " << (boolean ? "true" : "false") << std::endl;
+    std::cout << "json6 = " << (null == nullptr ? "null" : "") << std::endl;
+
     // Write
     
     return 0;
