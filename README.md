@@ -63,9 +63,7 @@ int main() {
 ```
 
 ## TODO
-- Enable using only the header-file.
 - Implement other useful member functions.
 - Support for file input.
 - Support for escape character.
-- Support for cxxjp namespace.
 - Support for error message.
