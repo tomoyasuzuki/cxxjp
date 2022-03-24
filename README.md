@@ -10,35 +10,55 @@ int main() {
                         "boolean": true, "array": [10, 20, "string", false, {"string": "string"}], 
                         "object": { "string": "object_string", "object_double": 1.234, "object_boolean": true, 
                         "object_array": [2,"hogehuga", false, {"number": 234}], "object_object": {"hoge": "huga"}}})";
- 
-    ...
+    std::string json2 = R"(["hoge", "huga", 2.313, true, [10], {"object": "object_string"}])";
+    std::string json3 = R"("hoge")";
+    std::string json4 = R"(100)";
+    std::string json5 = R"(false)";
+    std::string json6 = R"(null)";
     
-    value v1;
-    object_t obj;
-  
-    parse(json1, v1);
-    
-    obj = v1.get_obj();
-   
-    // string
-    std::cout << '"' << obj["string"].get_str() << '"' << std::endl;
-    // number
-    std::cout << obj["double1"].get_num() << std::endl;
-    // boolean
-    std::cout << (obj["boolean"].get_bool() ? "true" : "false") << std::endl;
-    // null
-    std::cout << (obj["null"].get_null() == nullptr ? "nullptr" : "") << std::endl;
-    // array
-    array_t a = obj["array"].get_arr();
-    print_array(a);
-    std::cout << "\n";
-    // WIP: object
-    object_t o = obj["obj"].get_obj();
-    
+    cxxjp::value value1, value2, value3, value4, value5, value6;
 
-    ...
+    cxxjp::object_t object;
+    cxxjp::array_t array;
+    std::string string;
+    cxxjp::number_t number;
+    bool boolean;
+    nullptr_t null;
+
+    parse(json1, value1);
+    parse(json2, value2);
+    parse(json3, value3);
+    parse(json4, value4);
+    parse(json5, value5);
+    parse(json6, value6);
+
+    // Dump 
+    std::cout << value1.dump() << std::endl;
+    std::cout << value2.dump() << std::endl;
+    std::cout << value3.dump() << std::endl;
+    std::cout << value4.dump() << std::endl;
+    std::cout << value5.dump() << std::endl;
+    std::cout << value6.dump() << std::endl;
+
+    // Read
+    object = value1.get<cxxjp::object_t>();
+    array = value2.get<cxxjp::array_t>();
+    string = value3.get<std::string>();
+    number = value4.get<cxxjp::number_t>();
+    boolean = value5.get<bool>();
+    null = value6.get<nullptr_t>();
+
+    std::cout << "json1[\"string\"] = " << object["string"].get<std::string>() << std::endl;
+    std::cout << "json2[4] = " << array[4].dump() << std::endl;
+    std::cout << "json3 = " << '"' << string << '"' << std::endl;
+    std::cout << "json4 = " << number << std::endl;
+    std::cout << "json5 = " << (boolean ? "true" : "false") << std::endl;
+    std::cout << "json6 = " << (null == nullptr ? "null" : "") << std::endl;
+
+    // Write
+    WIP
     
-    return 1;
+    return 0;
 } 
 ```
 
