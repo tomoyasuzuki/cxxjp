@@ -59,7 +59,19 @@ int main() {
     std::cout << "json6 = " << (null == nullptr ? "null" : "") << std::endl;
 
     // Write
-    WIP
+    object["string"] = "changed_value";
+    object["int"] = 222;
+    object["double1"] = 2.334;
+    object["boolean"] = false;
+
+    auto new_array = std::vector<cxxjp::value>{cxxjp::value("piyo"), cxxjp::value(2.335)};
+    object["array"] = new_array;
+
+    std::cout << object["string"].get<std::string>() << std::endl;
+    std::cout << object["int"].get<cxxjp::number_t>() << std::endl;
+    std::cout << object["double1"].get<cxxjp::number_t>() << std::endl;
+    std::cout << (object["boolean"].get<cxxjp::number_t>() ? "true" : "false") << std::endl;
+    std::cout << object["array"].dump() << std::endl;
     
     return 0;
 } 

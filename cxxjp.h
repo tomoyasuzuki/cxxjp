@@ -11,6 +11,7 @@ namespace cxxjp {
     class value;
 
     using number_t = double;
+    using boolean = bool;
     using array_t = std::vector<value>;
     using object_t = std::map<std::string, value>;
 
@@ -36,21 +37,20 @@ namespace cxxjp {
             type_t type;
             std::string str;
             number_t num;
-            bool bol;
+            boolean bol;
             nullptr_t nul;
             array_t arr;
             object_t obj;
         public:
             value() : type(unknown) {};
             value(std::string s) : type(string_type), str(s) {};
+            value(char *c) : type(string_type), str(std::string(c)) {};
             value(number_t n) : type(number_type), num(n) {};
-            value(bool b) : type(boolean_type), bol(b) {};
+            value(boolean b) : type(boolean_type), bol(b) {};
             value(nullptr_t n) : type(null_type), nul(n) {};
             value(array_t& a) : type(array_type), arr(a) {};
             value(object_t& o) : type(object_type), obj(o) {};
             ~value() {};
-            type_t get_type() { return type; };
-            std::string dump() const;
             template <typename T> T& get() const {
                 if (type == string_type) {
                     return *(T*)(void*)(&str);
@@ -68,6 +68,33 @@ namespace cxxjp {
                     return *(T*)(void*)nullptr;
                 }
             }
+            type_t get_type() { return type; };
+            std::string dump() const;
+            const std::string& operator=(const char *s) {
+                str = std::string(s);
+                type = string_type;
+                return str;
+            };
+            const number_t& operator=(number_t d) {
+                num = d;
+                type = number_type;
+                return num;
+            }
+            const number_t& operator=(int d) {
+                num = static_cast<double>(d);
+                type = number_type;
+                return num;
+            };
+            const array_t& operator=(std::vector<value> a) {
+                arr = a;
+                type = array_type;
+                return arr;
+            }
+            const boolean& operator=(boolean b) {
+                bol = b;
+                type = boolean_type;
+                return bol;
+            };
     };
 
     std::string value::dump() const {
