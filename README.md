@@ -5,6 +5,9 @@ This project is for hobbyist use only and should not be used in a production env
 
 ## example 
 ```c++
+#include <iostream>
+#include "cxxjp.h"
+
 int main() {
     std::string json1 = R"({"string": "hoge", "int": 543, "double1": 5.232, "double2": 1e9, "null": null,
                         "boolean": true, "array": [10, 20, "string", false, {"string": "string"}], 
