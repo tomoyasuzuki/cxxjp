@@ -14,9 +14,13 @@ namespace cxxjp {
     using boolean = bool;
     using array_t = std::vector<value>;
     using object_t = std::map<std::string, value>;
-
-    object_t parse_object(std::string& s, int& i);
-
+    
+    enum error_t {
+        unknown_error,
+        syntax_error,
+        success
+    };
+    
     enum type_t {
         unknown,
         string_type,
@@ -26,12 +30,7 @@ namespace cxxjp {
         object_type,
         null_type
     };
-
-    enum error_t {
-        unknown_error,
-        syntax_error
-    };
-
+    
     class value {
         private: 
             type_t type;
@@ -68,8 +67,6 @@ namespace cxxjp {
                     return *(T*)(void*)nullptr;
                 }
             }
-            type_t get_type() { return type; };
-            std::string dump() const;
             const std::string& operator=(const char *s) {
                 str = std::string(s);
                 type = string_type;
@@ -95,7 +92,11 @@ namespace cxxjp {
                 type = boolean_type;
                 return bol;
             };
+
+            std::string dump() const;
     };
+
+    error_t parse_object(std::string& s, object_t& obj, int& i);
 
     std::string value::dump() const {
         std::stringstream ss;
@@ -179,9 +180,8 @@ namespace cxxjp {
     int skip_first_non_space_or_comma(int i) { return ++i; };
     int skip_last_non_space(int i) { return ++i; };
 
-    std::string parse_string(std::string& s, int& i) {
+    error_t parse_string(std::string& s, std::string& v, int& i) {
         int start;
-        std::string v;
 
         start = i;
 
@@ -191,20 +191,19 @@ namespace cxxjp {
 
         v = s.substr(start + 1, i - start - 1);
 
-        return v;
+        return success;
     }
 
-    number_t parse_number(std::string& s, int& i) {
+    error_t parse_number(std::string& s, number_t& num, int& i) {
         int start;
-        number_t num;
         std::string substr;
         std::istringstream ss;
+        error_t err = success;
 
         start = i;
         
         if (s[i] < 0x30 || s[i] > 0x39) {
-            std::cout << "error!!(parse_number_type)" << std::endl;
-            return 0;
+            return syntax_error;
         }
 
         while((s[i] >= '0' && s[i] <= '9') && i < s.length() || s[i] == '.' || s[i] == 'e') i++;
@@ -215,12 +214,17 @@ namespace cxxjp {
 
         i--;
 
-        return num;
+        return err;
         
     }
 
-    array_t parse_array(std::string& s, int& i) {
-        array_t arr;
+    error_t parse_array(std::string& s, array_t& arr, int& i) {
+        error_t err = success;
+
+        if (s[i+1] == ']') {
+            i++;
+            return err;
+        }
 
         while(s[i] != ']' && i < s.length() - 1) {
             std::istringstream ss;
@@ -230,10 +234,18 @@ namespace cxxjp {
             i = skip_whitespaces(s, i);
             
             if (s[i] == '{') {
-                object_t obj = parse_object(s, i);
+                object_t obj;
+                err = parse_object(s, obj, i);
+                if (err != success) {
+                    return err;
+                }
                 v = value(obj);
             }  else if (s[i] == '[') {
-                array_t arr = parse_array(s, i);
+                array_t arr;
+                err = parse_array(s, arr, i);
+                if (err != success) {
+                    return err;
+                }
                 v = value(arr);
             } else if (s[i] == '"') {
                 int start = ++i;
@@ -261,7 +273,7 @@ namespace cxxjp {
                 i += 3;
                 v = value(nullptr);
             } else {
-                std::cout << "unknown: " << s[i] << std::endl;
+                return syntax_error;
             }
 
             arr.push_back(v);
@@ -270,12 +282,17 @@ namespace cxxjp {
             i = skip_whitespaces(s, i);
         }
 
-        return arr;
+        return success;
     }
 
-    object_t parse_object(std::string& s, int& i) {
-        object_t obj;
+    error_t parse_object(std::string& s, object_t& obj, int& i) {
         std::string key;
+        error_t err = success;
+
+        if (s[i+1] == '}') {
+            i++;
+            return err;
+        }
 
         while(s[i] != '}') {
             key = get_key(s, i);
@@ -285,10 +302,18 @@ namespace cxxjp {
                 i = skip_whitespaces(s, i + 1);
             
                 if (s[i] == '"') {
-                    std::string str = parse_string(s, i);
+                    std::string str = "";
+                    err = parse_string(s, str, i);
+                    if (err != success) {
+                        return err;
+                    }
                     obj[key] = value(str);
                 } else if (s[i] >= 0x30 && s[i] <= 0x39) {
-                    number_t num = parse_number(s, i);
+                    number_t num = 0;
+                    err = parse_number(s, num, i);
+                    if (err != success) {
+                        return err;
+                    }
                     obj[key] = value(num);
                 } else if (s.substr(i, 4) == "true")  { 
                     i += 3;
@@ -297,41 +322,65 @@ namespace cxxjp {
                     i += 4;
                     obj[key] = value(false);
                 } else if (s[i] == '[') {
-                    array_t arr = parse_array(s, i);
+                    array_t arr;
+                    err = parse_array(s, arr, i);
+                    if (err != success) {
+                        return err;
+                    }
                     obj[key] = value(arr);
                 } else if (s.substr(i, 4) == "null") {
                     obj[key] = value(nullptr);
                 } else if (s[i] == '{') {
-                    object_t object = parse_object(s, i);
+                    object_t object;
+                    err = parse_object(s, object, i);
+                    if (err != success) {
+                        return err;
+                    }
                     obj[key] = value(object);
                 } else {
-                    std::cout << "else: " << s[i] << std::endl;
-                    break;
+                    return syntax_error;
                 }
             } else {
                 i = skip_whitespaces(s, i);
-                std::cout << "err: cannot find coron" << s[i] << std::endl;
+                return syntax_error;
             }
 
             i = skip_last_non_space(i);
             i = skip_whitespaces(s, i);
         }
 
-        return obj;
+        return err;
     }
 
-    void parse(std::string& s, value& v, int i = 0) {
+    error_t parse(std::string& s, value& v, int i = 0) {
+        error_t err = success;
         if (s[i] == '{') {
-            object_t object = parse_object(s, i);
+            object_t object;
+            err = parse_object(s, object, i);
+            if (err != success) {
+                return err;
+            }
             v = value(object);
         } else if (s[i] == '[') {
-            array_t arr = parse_array(s, i);
+            array_t arr;
+            err = parse_array(s, arr, i);
+            if (err != success) {
+                return err;
+            }
             v = value(arr);
         } else if (s[i] == '"') {
-            std::string str = parse_string(s, i);
+            std::string str;
+            err = parse_string(s, str, i);
+            if (err != success) {
+                return err;
+            }
             v = value(str);
         } else if (s[i] >= 0x30 && s[i] <= 0x39) {
-            number_t num = parse_number(s, i);
+            number_t num;
+            err = parse_number(s, num, i);
+            if (err != success) {
+                return err;
+            }
             v = value(num);
         } else if (s.substr(i, 4) == "true") {
             v = value(true);
@@ -340,7 +389,19 @@ namespace cxxjp {
         } else if (s.substr(i, 4) == "null") {
             v = value(nullptr);
         } else {
-            std::cout << "err at parse();" << std::endl;
+            err = syntax_error;
         }
+
+        return err;
     }
+
+    std::string err_message(error_t err) {
+        if (err == unknown_error) {
+            return "unknown error";
+        } else if (err == syntax_error) {
+            return "syntax error";
+        } else {
+            return "success";
+        }
+    } 
 }
