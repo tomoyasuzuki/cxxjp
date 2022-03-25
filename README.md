@@ -69,4 +69,3 @@ json["boolean"] = false
 - Implement other useful member functions.
 - Support for file input.
 - Support for escape character.
-- Support for error message.
