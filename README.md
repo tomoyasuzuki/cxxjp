@@ -52,7 +52,9 @@ int main() {
 } 
 ```
 ```
-json = {"age": 23, "array": [10, {}], "boolean": true, "double1": 5.232, "double2": 1e+09, "name": "Tom", "null": null, "object": {"object_array": [2, "hogehuga"], "object_boolean": true, "object_double": 1.234, "object_object": {"hoge": "huga"}, "string": "object_string"}}
+json = {"age": 23, "array": [10, {}], "boolean": true, "double1": 5.232, 
+        "double2": 1e+09, "name": "Tom", "null": null, "object": {"object_array": [2, "hogehuga"], 
+        "object_boolean": true, "object_double": 1.234, "object_object": {"hoge": "huga"}, "string": "object_string"}}
 json["name"] = Tom
 json["double1"] = 5.232
 json["boolean"] = true
