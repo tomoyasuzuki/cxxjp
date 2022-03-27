@@ -96,6 +96,11 @@ namespace cxxjp {
             std::string dump() const;
     };
 
+    static inline int skip_whitespaces(const std::string& s, int i) { while(s[i] == ' ' && i < s.length() - 1) i++; return i; };
+    static inline int skip_first_non_space_or_comma(int i) { return ++i; };
+    static inline int skip_last_non_space(int i) { return ++i; };
+    static inline bool is_overflow(const std::string& s, const int& i) { return (i > s.size()-1 ? true : false); };
+
     error parse_object(const std::string& s, object& obj, int& i);
 
     std::string value::dump() const {
@@ -158,51 +163,39 @@ namespace cxxjp {
 
     std::string get_key(const std::string& s, int& current_i) {
         std::string key;
-        int start;
+        int start = current_i;
 
-        start = current_i;
-
-        while(s[start] != '"' && start < s.length() - 1) start++;
+        while(s[start] != '"' && !is_overflow(s,start)) start++;
         current_i = start + 1;
-        while(s[current_i] != '"' && current_i < s.length() - 1) current_i++;
+        while(s[current_i] != '"' && !is_overflow(s,current_i)) current_i++;
         
         key = s.substr(start + 1, current_i - start - 1);
 
-        current_i++;
+        ++current_i;
         return key;
     }
 
-    static inline int skip_whitespaces(const std::string& s, int i) { while(s[i] == ' ' && i < s.length() - 1) i++; return i; };
-    static inline int skip_first_non_space_or_comma(int i) { return ++i; };
-    static inline int skip_last_non_space(int i) { return ++i; };
+    error parse_string(const std::string& s, std::string& v, int& end) {
+        int start = end;
 
-    error parse_string(const std::string& s, std::string& v, int& i) {
-        int start;
+        while(s[start] != '"' && !is_overflow(s,start)) ++start;
+        end = start + 1;
+        while(s[end] != '"' && !is_overflow(s,end)) ++end;
 
-        start = i;
-
-        while(s[start] != '"' && start < s.length() - 1) start++;
-        i = start + 1;
-        while(s[i] != '"' && i < s.length() - 1) i++;
-
-        v = s.substr(start + 1, i - start - 1);
+        v = s.substr(start + 1, end-start-1);
 
         return error::success;
     }
 
     error parse_number(const std::string& s, number& num, int& i) {
-        int start;
+        int start = i;
         std::string substr;
         std::istringstream ss;
         error err = error::success;
-
-        start = i;
         
-        if (s[i] < 0x30 || s[i] > 0x39) {
-            return error::syntax_error;
-        }
+        if (s[i] < '0' || s[i] > '9') { return error::syntax_error; };
 
-        while((s[i+1] >= '0' && s[i+1] <= '9') && i < s.length() || s[i+1] == '.' || s[i+1] == 'e') ++i;
+        while(((s[i+1] >= '0' && s[i+1] <= '9') || s[i+1] == '.' || s[i+1] == 'e') && !is_overflow(s,i)) ++i;
 
         substr = s.substr(start, i-start+1);
         ss = std::istringstream(substr);
@@ -215,12 +208,9 @@ namespace cxxjp {
     error parse_array(const std::string& s, array& arr, int& i) {
         error err = error::success;
 
-        if (s[i+1] == ']') {
-            i++;
-            return err;
-        }
+        if (s[i+1] == ']') { ++i; return err; };
 
-        while(s[i] != ']' && i < s.length() - 1) {
+        while(s[i] != ']' && !is_overflow(s,i)) {
             std::istringstream ss;
             value v;
 
@@ -244,14 +234,14 @@ namespace cxxjp {
             } else if (s[i] == '"') {
                 int start = ++i;
 
-                while(s[i] != '"' && i < s.length() - 1) i++;
+                while(s[i] != '"' && !is_overflow(s,i)) ++i;
                 
                 v = value(s.substr(start, i-start));
             } else if (s[i] >= '0' && s[i] <= '9') {
                 number num;
                 int start = i;
                 
-                while((s[i+1] >= '0' && s[i+1] <= '9' || s[i+1] == '.' || s[i+1] == 'e') && i+1 < s.length() - 1) ++i; 
+                while((s[i+1] >= '0' && s[i+1] <= '9' || s[i+1] == '.' || s[i+1] == 'e') && !is_overflow(s,i+1)) ++i; 
 
                 ss = std::istringstream(s.substr(start, i-start+1));
                 ss >> num;
@@ -282,10 +272,7 @@ namespace cxxjp {
         std::string key;
         error err = error::success;
 
-        if (s[i+1] == '}') {
-            i++;
-            return err;
-        }
+        if (s[i+1] == '}') { ++i; return err; };
 
         while(s[i] != '}') {
             key = get_key(s, i);
@@ -301,7 +288,7 @@ namespace cxxjp {
                         return err;
                     }
                     obj[key] = value(str);
-                } else if (s[i] >= 0x30 && s[i] <= 0x39) {
+                } else if (s[i] >= '0' && s[i] <= '9') {
                     number num = 0;
                     err = parse_number(s, num, i);
                     if (err != error::success) {
