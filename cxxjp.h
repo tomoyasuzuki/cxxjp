@@ -42,13 +42,13 @@ namespace cxxjp {
             object_t obj;
         public:
             value() : type(unknown) {};
-            value(std::string s) : type(string_type), str(s) {};
-            value(char *c) : type(string_type), str(std::string(c)) {};
-            value(number_t n) : type(number_type), num(n) {};
-            value(boolean b) : type(boolean_type), bol(b) {};
-            value(nullptr_t n) : type(null_type), nul(n) {};
-            value(array_t& a) : type(array_type), arr(a) {};
-            value(object_t& o) : type(object_type), obj(o) {};
+            explicit value(std::string s) : type(string_type), str(s) {};
+            explicit value(char *c) : type(string_type), str(std::string(c)) {};
+            explicit value(number_t n) : type(number_type), num(n) {};
+            explicit value(boolean b) : type(boolean_type), bol(b) {};
+            explicit value(nullptr_t n) : type(null_type), nul(n) {};
+            explicit value(array_t& a) : type(array_type), arr(a) {};
+            explicit value(object_t& o) : type(object_type), obj(o) {};
             ~value() {};
             template <typename T> T& get() const {
                 if (type == string_type) {
@@ -172,13 +172,9 @@ namespace cxxjp {
         return key;
     }
 
-    int skip_whitespaces(const std::string& s, int i) {
-        while(s[i] == ' ' && i < s.length() - 1) i++;
-        return i;
-    }
-
-    int skip_first_non_space_or_comma(int i) { return ++i; };
-    int skip_last_non_space(int i) { return ++i; };
+    static inline int skip_whitespaces(const std::string& s, int i) { while(s[i] == ' ' && i < s.length() - 1) i++; return i; };
+    static inline int skip_first_non_space_or_comma(int i) { return ++i; };
+    static inline int skip_last_non_space(int i) { return ++i; };
 
     error_t parse_string(const std::string& s, std::string& v, int& i) {
         int start;
