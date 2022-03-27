@@ -202,13 +202,11 @@ namespace cxxjp {
             return syntax_error;
         }
 
-        while((s[i] >= '0' && s[i] <= '9') && i < s.length() || s[i] == '.' || s[i] == 'e') i++;
+        while((s[i+1] >= '0' && s[i+1] <= '9') && i < s.length() || s[i+1] == '.' || s[i+1] == 'e') ++i;
 
-        substr = s.substr(start, i-start);
+        substr = s.substr(start, i-start+1);
         ss = std::istringstream(substr);
         ss >> num;
-
-        i--;
 
         return err;
         
@@ -253,12 +251,11 @@ namespace cxxjp {
                 number_t num;
                 int start = i;
                 
-                while((s[i] >= '0' && s[i] <= '9' || s[i] == '.' || s[i] == 'e') && i < s.length() - 1) i++; 
+                while((s[i+1] >= '0' && s[i+1] <= '9' || s[i+1] == '.' || s[i+1] == 'e') && i+1 < s.length() - 1) ++i; 
 
-                ss = std::istringstream(s.substr(start, i-start));
+                ss = std::istringstream(s.substr(start, i-start+1));
                 ss >> num;
-                v = value(num);  
-                i -= 1;      
+                v = value(num);   
             } else if (s.substr(i,  4) == "true") {
                 i += 3;
                 v = value(true);
