@@ -357,7 +357,7 @@ namespace cxxjp {
                 return err;
             }
             v = value(str);
-        } else if (s[i] >= 0x30 && s[i] <= 0x39) {
+        } else if (s[i] >= '0' && s[i] <= '9') {
             number num;
             err = parse_number(s, num, i);
             if (err != error::success) {
