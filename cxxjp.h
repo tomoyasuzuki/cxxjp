@@ -375,13 +375,13 @@ namespace cxxjp {
         return err;
     }
 
-    std::string err_message(error err) {
+    std::string err_message(const error err) {
         if (err == error::unknown_error) {
             return "unknown error";
         } else if (err == error::syntax_error) {
             return "syntax error";
         } else {
-            return "error::success";
+            return "success";
         }
     } 
 }
