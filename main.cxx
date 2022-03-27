@@ -18,7 +18,6 @@ int main() {
     cxxjp::object object;
     cxxjp::array array;
 
-
     // Dump 
     std::cout << "json = " << value.dump() << std::endl;
 

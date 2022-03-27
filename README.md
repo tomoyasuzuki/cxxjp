@@ -25,7 +25,6 @@ int main() {
     cxxjp::object_t object;
     cxxjp::array_t array;
 
-
     // Dump 
     std::cout << "json = " << value.dump() << std::endl;
 
