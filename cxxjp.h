@@ -96,7 +96,7 @@ namespace cxxjp {
             std::string dump() const;
     };
 
-    error_t parse_object(std::string& s, object_t& obj, int& i);
+    error_t parse_object(const std::string& s, object_t& obj, int& i);
 
     std::string value::dump() const {
         std::stringstream ss;
@@ -156,7 +156,7 @@ namespace cxxjp {
        return ss.str();
     };
 
-    std::string get_key(std::string& s, int& current_i) {
+    std::string get_key(const std::string& s, int& current_i) {
         std::string key;
         int start;
 
@@ -172,7 +172,7 @@ namespace cxxjp {
         return key;
     }
 
-    int skip_whitespaces(std::string& s, int i) {
+    int skip_whitespaces(const std::string& s, int i) {
         while(s[i] == ' ' && i < s.length() - 1) i++;
         return i;
     }
@@ -180,7 +180,7 @@ namespace cxxjp {
     int skip_first_non_space_or_comma(int i) { return ++i; };
     int skip_last_non_space(int i) { return ++i; };
 
-    error_t parse_string(std::string& s, std::string& v, int& i) {
+    error_t parse_string(const std::string& s, std::string& v, int& i) {
         int start;
 
         start = i;
@@ -194,7 +194,7 @@ namespace cxxjp {
         return success;
     }
 
-    error_t parse_number(std::string& s, number_t& num, int& i) {
+    error_t parse_number(const std::string& s, number_t& num, int& i) {
         int start;
         std::string substr;
         std::istringstream ss;
@@ -218,7 +218,7 @@ namespace cxxjp {
         
     }
 
-    error_t parse_array(std::string& s, array_t& arr, int& i) {
+    error_t parse_array(const std::string& s, array_t& arr, int& i) {
         error_t err = success;
 
         if (s[i+1] == ']') {
@@ -285,7 +285,7 @@ namespace cxxjp {
         return success;
     }
 
-    error_t parse_object(std::string& s, object_t& obj, int& i) {
+    error_t parse_object(const std::string& s, object_t& obj, int& i) {
         std::string key;
         error_t err = success;
 
