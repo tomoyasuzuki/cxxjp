@@ -165,9 +165,9 @@ namespace cxxjp {
         std::string key;
         int start = current_i;
 
-        while(s[start] != '"' && !is_overflow(s,start)) start++;
+        while(s[start] != '"' && !is_overflow(s,start)) ++start;
         current_i = start + 1;
-        while(s[current_i] != '"' && !is_overflow(s,current_i)) current_i++;
+        while(s[current_i] != '"' && !is_overflow(s,current_i)) ++current_i;
         
         key = s.substr(start + 1, current_i - start - 1);
 
@@ -332,8 +332,10 @@ namespace cxxjp {
         return err;
     }
 
-    error parse(std::string& s, value& v, int i = 0) {
+    error parse(const std::string& s, value& v) {
+        int i = 0;
         error err = error::success;
+
         if (s[i] == '{') {
             object object;
             err = parse_object(s, object, i);
