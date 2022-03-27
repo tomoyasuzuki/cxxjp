@@ -18,7 +18,7 @@ int main() {
 
     err = parse(json, value);
     if (err != cxxjp::error::success) {
-        std::cerr << "Failed: " << cxxjp::err_message(err) << std::endl;
+        std::cerr << "Failed: " << err_message(err) << std::endl;
         exit(2);
     }
     
